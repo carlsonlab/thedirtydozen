@@ -52,20 +52,17 @@ att %>%
 
 ### Basic map setup
 
-sf_use_s2(FALSE) # This solves geometry issues! I never knew that 
-
-who <- read_sf("GLOBAL_ADM0.shp")
-
-who %>% 
-  group_by(WHO_REGION) %>%
-  summarize() -> who
+who <- read_sf("WHORegionsBoundary.shp")
+who <- who %>%
+  mutate(WHO_region = paste0(WHO_region, "O"))
+who$WHO_region[who$WHO_region=='NAO'] <- NA
 
 who %>% 
   st_centroid() -> centroids
 
 who %>% 
   ggplot() + 
-  geom_sf(aes(fill=WHO_REGION), color="black") +
+  geom_sf(aes(fill=WHO_region), color="black") +
   geom_sf(data = centroids, color = 'black', shape = 8, size = 3) + 
   theme_void()
 
@@ -73,7 +70,7 @@ who %>%
 ### Turn this into scatterpie 
 
 centroids %>% geometry_to_lonlat() %>%
-  rename(Region = WHO_REGION) %>%
+  rename(Region = WHO_region) %>%
   left_join(att) -> atpts
 
 # move the SEARO and WPRO just a tiny bit apart 
@@ -83,10 +80,10 @@ atpts$lon[6] <- atpts$lon[6] + 20
 colors <- met.brewer("Renoir", n=15)
 who %>% 
   ggplot() + 
-  geom_sf(aes(fill = WHO_REGION), color=NA, alpha = 0.6) +
-  scale_fill_manual(values = met.brewer("Pillement", n=6), guide = "none") + 
+  geom_sf(aes(fill = WHO_region), color=NA, alpha = 0.6) +
+  scale_fill_manual(values = met.brewer("Pillement", n=7), guide = "none") + 
   theme_bw() +
-  coord_sf(xlim=c(-180,180), ylim=c(-60,90)) + 
+  coord_sf(xlim=c(-180,180), ylim=c(-55,90)) + 
   ggnewscale::new_scale_fill() +
   geom_scatterpie(data = atpts[,-1], 
                   aes(x=lon, y=lat, r = 1.2*RegionCount), 
